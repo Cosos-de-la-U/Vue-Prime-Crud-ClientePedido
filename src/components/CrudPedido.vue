@@ -11,10 +11,26 @@
         dataKey="id"
         responsiveLayout="scroll"
       >
-        <ColumnTable field="nombre" header="Nombre"></ColumnTable>
-        <ColumnTable field="fecha" header="Fecha"></ColumnTable>
-        <ColumnTable field="total" header="Total"></ColumnTable>
-        <ColumnTable field="estado" header="Estado"></ColumnTable>
+        <ColumnTable
+          field="nombre"
+          header="Nombre"
+          :sortable="true"
+        ></ColumnTable>
+        <ColumnTable
+          field="fecha"
+          header="Fecha"
+          :sortable="true"
+        ></ColumnTable>
+        <ColumnTable
+          field="total"
+          header="Total"
+          :sortable="true"
+        ></ColumnTable>
+        <ColumnTable
+          field="estado"
+          header="Estado"
+          :sortable="true"
+        ></ColumnTable>
       </DataTable>
     </PanelTable>
   </div>
@@ -32,20 +48,41 @@
     </span>
     <span class="p-float-label space-label">
       <CalendarTable
-        v-model="pedido.fecha"
+        v-model="v$.pedido.fecha.$model"
         inputId="pedido.fecha"
         dateFormat="yy-mm-dd"
         :showTime="false"
+        :class="{ 'p-invalid': v$.pedido.fecha.$error }"
       />
       <label for="fecha">fecha</label>
+      <small class="p-error" v-if="!v$.pedido.fecha.required"
+        >Fecha es obligatorio</small
+      >
     </span>
     <span class="p-float-label space-label">
-      <InputNumber id="total" type="text" v-model="pedido.total"  />
+      <InputNumber
+        id="total"
+        mode="decimal"
+        maxFractionDigits="2"
+        v-model="v$.pedido.total.$model"
+        :class="{ 'p-invalid': v$.pedido.total.$error }"
+      />
       <label for="total">Total</label>
+      <small class="p-error" v-if="!v$.pedido.total.required"
+        >Pedido es obligatorio</small
+      >
     </span>
     <span class="p-float-label space-label">
-      <InputText id="estado" type="text" v-model="pedido.estado" />
+      <InputText
+        id="estado"
+        type="text"
+        v-model="v$.pedido.estado.$model"
+        :class="{ 'p-invalid': v$.pedido.estado.$error }"
+      />
       <label for="estado">Estado</label>
+      <small class="p-error" v-if="!v$.pedido.estado.required"
+        >Estado es obligatorio</small
+      >
     </span>
 
     <template #footer>
@@ -69,10 +106,14 @@
 </template>
 
 <script>
-import dayjs from 'dayjs';
+import { required, numeric, not } from "@vuelidate/validators";
+import { useVuelidate } from "@vuelidate/core";
+
+import dayjs from "dayjs";
 import pedido from "@/helper/Pedido";
 import cliente from "@/helper/Cliente";
 export default {
+  setup: () => ({ v$: useVuelidate() }),
   data() {
     return {
       titulo: "",
@@ -131,6 +172,18 @@ export default {
       ],
     };
   },
+  validations() {
+    return {
+      pedido: {
+        id: { required: not },
+        idCliente: { required: not },
+        nombre: { required: not },
+        fecha: { required },
+        total: { required, numeric },
+        estado: { required },
+      },
+    };
+  },
   // DI
   pedidoService: null,
   clienteService: null,
@@ -144,11 +197,13 @@ export default {
   },
   methods: {
     generate() {
-      if (this.titulo === "Agregar Pedido") {
-        this.save();
-      }
-      if (this.titulo === "Editar Pedido") {
-        this.edit();
+      if (!this.v$.$invalid) {
+        if (this.titulo === "Agregar Pedido") {
+          this.save();
+        }
+        if (this.titulo === "Editar Pedido") {
+          this.edit();
+        }
       }
     },
     getAll() {
@@ -160,7 +215,7 @@ export default {
       // destructure
       const { fecha, total, estado } = this.pedido;
       // date
-      const fDate = dayjs(fecha).format('YYYY-MM-DD')
+      const fDate = dayjs(fecha).format("YYYY-MM-DD");
       // create the object
       this.pedido = {
         idCliente: Number(this.selectedCliente),
@@ -171,20 +226,16 @@ export default {
       console.log(this.pedido);
       this.pedidoService.save(this.pedido).then((data) => {
         if (data.status === 201) {
-          this.showToast(
-            `success`,
-            `Agregar`,
-            `El pedido fue agregado`
-          );
+          this.showToast(`success`, `Agregar`, `El pedido fue agregado`);
           this.reset();
         }
       });
     },
     edit() {
-       // destructure
-       const { id, fecha, total, estado } = this.pedido;
+      // destructure
+      const { id, fecha, total, estado } = this.pedido;
       // date
-      const fDate = dayjs(fecha).format('YYYY-MM-DD')
+      const fDate = dayjs(fecha).format("YYYY-MM-DD");
       // create the object
       this.pedido = {
         id: Number(id),

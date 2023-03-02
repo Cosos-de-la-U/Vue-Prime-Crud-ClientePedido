@@ -11,40 +11,59 @@
         dataKey="id"
         responsiveLayout="scroll"
       >
-        <ColumnTable field="nombre" header="Nombre"></ColumnTable>
-        <ColumnTable field="direccion" header="Direccion"></ColumnTable>
-        <ColumnTable field="telefono" header="Telefono"></ColumnTable>
-        <ColumnTable field="email" header="E-mail"></ColumnTable>
+        <ColumnTable field="nombre" header="Nombre" :sortable="true"></ColumnTable>
+        <ColumnTable field="direccion" header="Direccion" :sortable="true"></ColumnTable>
+        <ColumnTable field="telefono" header="Telefono" :sortable="true"></ColumnTable>
+        <ColumnTable field="email" header="E-mail" :sortable="true"></ColumnTable>
       </DataTable>
     </PanelTable>
   </div>
   <DialogTable :header="titulo" v-model:visible="displayModal" :modal="true">
     <span class="p-float-label space-label">
-      <InputText id="nombre" type="text" v-model="cliente.nombre" required />
+      <InputText
+        id="nombre"
+        v-model.trim="v$.cliente.nombre.$model"
+        :class="{ 'p-invalid': v$.cliente.nombre.$error }"
+      />
       <label for="nombre">Nombre</label>
-      <span v-if="$v.cliente.nombre.$error">Nombre is required</span>
+      <small class="p-error" v-if="!v$.cliente.nombre.required"
+        >Nombre es obligatorio</small
+      >
     </span>
     <span class="p-float-label space-label">
       <InputText
         id="direccion"
-        type="text"
-        v-model="cliente.direccion"
-        required
+        v-model.trim="v$.cliente.direccion.$model"
+        :class="{ 'p-invalid': v$.cliente.direccion.$error }"
       />
       <label for="direccion">Direccion</label>
+      <small class="p-error" v-if="!v$.cliente.direccion.required"
+        >Direccion es obligatoria</small
+      >
     </span>
     <span class="p-float-label space-label">
       <InputMask
-        v-model="cliente.telefono"
+        v-model.trim="v$.cliente.telefono.$model"
+        :class="{ 'p-invalid': v$.cliente.telefono.$error }"
         id="telefono"
         mask="99999999"
         :regEx="/^([27]\d{7})$/"
       />
       <label for="telefono">Telefono</label>
+      <small class="p-error" v-if="!v$.cliente.telefono.required"
+        >Telefono es obligatorio</small
+      >
     </span>
     <span class="p-float-label space-label">
-      <InputText id="email" type="email" v-model="cliente.email" required />
-      <label for="email">E-Mail</label>
+      <InputText
+        id="email"
+        v-model.trim="v$.cliente.email.$model"
+        :class="{ 'p-invalid': v$.cliente.email.$error }"
+      />
+      <label for="email">Email</label>
+      <small class="p-error" v-if="!v$.cliente.email.required"
+        >Email es obligatorio</small
+      >
     </span>
     <template #footer>
       <ButtonTable
@@ -56,6 +75,7 @@
       <ButtonTable
         @click="generate"
         @keyup.enter="generate"
+        type="submit"
         label="Agregar"
         icon="pi pi-check"
         autofocus
@@ -67,13 +87,16 @@
 </template>
 
 <script>
-import { email, required } from "@vuelidate/validators";
+import { email, required, numeric, not } from "@vuelidate/validators";
 import { useVuelidate } from "@vuelidate/core";
+
 import Cliente from "@/helper/Cliente";
 export default {
-  setup: () => ({v$: useVuelidate()}),
+  setup: () => ({ v$: useVuelidate() }),
   data() {
     return {
+      submitted: false,
+      showMessage: false,
       titulo: "",
       displayModal: false,
       clientes: null,
@@ -128,13 +151,16 @@ export default {
   validations() {
     return {
       cliente: {
-        id: required,
-        nombre: required,
-        direccion: required,
-        telefono: required,
+        id: { required: not },
+        nombre: { required },
+        direccion: { required },
+        telefono: {
+          required,
+          numeric,
+        },
         email: {
           required,
-          email
+          email,
         },
       },
     };
@@ -147,16 +173,18 @@ export default {
   },
   methods: {
     generate() {
-      if (this.titulo === "Agregar Cliente") {
-        this.save();
-      }
-      if (this.titulo === "Editar Cliente") {
-        this.edit();
+      if (!this.v$.$invalid) {
+        if (this.titulo === "Agregar Cliente") {
+          this.save();
+        }
+        if (this.titulo === "Editar Cliente") {
+          this.edit();
+        }
       }
     },
     getAll() {
       this.clienteService.getAll().then((data) => {
-        console.log(data);
+        // console.log(data);
         this.clientes = data.data;
       });
     },
@@ -217,6 +245,7 @@ export default {
         telefono: null,
         email: null,
       };
+      this.submitted = false;
       this.getAll();
     },
     showToast(severity, summary, detail) {
@@ -239,9 +268,14 @@ export default {
 
 .space-label {
   margin: 2.5rem 1rem 2.5rem 1rem;
+  display: flex;
+  flex-flow: column wrap;
 }
 
 .MenuBar {
   margin: 0 0 0.5% 0;
+}
+
+.cajaDentro {
 }
 </style>
