@@ -11,9 +11,21 @@
         dataKey="id"
         responsiveLayout="scroll"
       >
-        <ColumnTable field="nombre" header="Nombre" :sortable="true"></ColumnTable>
-        <ColumnTable field="apellido" header="Apellido" :sortable="true"></ColumnTable>
-        <ColumnTable field="correo" header="Correo" :sortable="true"></ColumnTable>
+        <ColumnTable
+          field="nombre"
+          header="Nombre"
+          :sortable="true"
+        ></ColumnTable>
+        <ColumnTable
+          field="apellido"
+          header="Apellido"
+          :sortable="true"
+        ></ColumnTable>
+        <ColumnTable
+          field="correo"
+          header="Correo"
+          :sortable="true"
+        ></ColumnTable>
         <ColumnTable field="sexo" header="Sexo" :sortable="true"></ColumnTable>
       </DataTable>
     </PanelTable>
@@ -53,15 +65,16 @@
       >
     </span>
     <span class="p-float-label space-label">
-      <InputText
+      <DropDown
+        v-model="sexoSelected"
+        :options="sexos"
         id="sexo"
-        v-model.trim="v$.persona.sexo.$model"
-        :class="{ 'p-invalid': v$.persona.sexo.$error }"
+        optionLabel="name"
+        placeholder="Selecione un sexo"
       />
       <label for="sexo">Sexo</label>
-      <small class="p-error" v-if="!v$.persona.sexo.required"
-        >Sexo es obligatorio</small
-      >
+      <!-- <small class="p-error" v-if="!v$.persona.sexo.required"
+        >Sexo es obligatorio</small> -->
     </span>
     <template #footer>
       <ButtonTable
@@ -102,8 +115,8 @@ export default {
         id: null,
         nombre: null,
         apellido: null,
-        sexo: null,
         correo: null,
+        sexo: null,
       },
       selectedPersona: {
         id: null,
@@ -134,14 +147,13 @@ export default {
             this.delete();
           },
         },
-        // {
-        //   label: "Actualizar",
-        //   icon: "pi pi-fw pi-refresh",
-        //   command: () => {
-        //     this.getAll();
-        //   },
-        // },
       ],
+      sexos: [
+        { name: "Masculino", code: "M" },
+        { name: "Femenino", code: "F" },
+        { name: "Otro", code: "O" },
+      ],
+      sexoSelected: null,
     };
   },
   // DI
@@ -152,9 +164,6 @@ export default {
         id: { required: not },
         nombre: { required },
         apellido: { required },
-        sexo: {
-          required,
-        },
         correo: {
           required,
           email,
@@ -186,7 +195,12 @@ export default {
       });
     },
     save() {
+      const { code } = this.sexoSelected;
+      console.log(code);
+
+      this.persona.sexo = code;
       console.log(this.persona);
+
       this.personaService.save(this.persona).then((data) => {
         if (data.status === 201) {
           this.showToast(
@@ -228,10 +242,14 @@ export default {
     },
     closeCreateModal() {
       this.displayModal = false;
+      this.selectedPersona = null;
     },
     showEditModal() {
       this.titulo = "Editar Persona";
       this.persona = this.selectedPersona;
+      this.sexoSelected = this.sexos.find(
+        (e) => e.code == this.persona.sexo
+      );
       this.displayModal = true;
     },
     reset() {
@@ -242,6 +260,7 @@ export default {
         sexo: null,
         correo: null,
       };
+      this.sexoSelected = null;
       this.submitted = false;
       this.getAll();
     },
