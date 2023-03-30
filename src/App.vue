@@ -14,15 +14,15 @@ export default {
     return {
       items: [
         {
-          label: "Clientes",
+          label: "Persona",
           icon: "pi pi-fw pi-user",
-          to: "/clientes"
+          to: "/persona"
         },
-        {
-          label: "Pedidos",
-          icon: "pi pi-fw pi-shopping-cart",
-          to: "/pedidos"
-        },
+        // {
+        //   label: "Pedidos",
+        //   icon: "pi pi-fw pi-shopping-cart",
+        //   to: "/pedidos"
+        // },
       ],
     };
   },
